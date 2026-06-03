@@ -1423,6 +1423,21 @@ const SCENE_POOL = [
     filters:{ scene:['工作餐','午餐'], people:['单人餐'] } },
   { id:'weekend-feast',  emoji:'🥳', label:'周末大餐',
     filters:{ people:['多人餐'], tags:['评价高'], category:['正餐','自助餐','火锅'] } },
+  // ===== 组合场景 =====
+  { id:'new-milk-tea',   emoji:'🧋', label:'新品奶茶',
+    filters:{ category:['奶茶'], tags:['新品上新'] } },
+  { id:'high-rate-buffet', emoji:'🍽️', label:'高分自助',
+    filters:{ category:['自助餐'], tags:['评价高'] } },
+  { id:'cheap-coffee',   emoji:'☕', label:'低价咖啡',
+    filters:{ category:['咖啡'], price:['10元以下','10-20元','20-30元'] } },
+  { id:'solo-hotpot',    emoji:'🍲', label:'一人火锅',
+    filters:{ category:['火锅'], people:['单人餐'] } },
+  { id:'double-subsidy-dinner', emoji:'💰', label:'加倍补餐',
+    filters:{ tags:['加倍补'], category:['正餐'] } },
+  { id:'new-fastfood',   emoji:'🆕', label:'新品快餐',
+    filters:{ tags:['新品上新'], category:['西式快餐','中式快餐'] } },
+  { id:'date-highrate',  emoji:'🕯️', label:'约会高分',
+    filters:{ people:['双人餐'], tags:['评价高'], scene:['晚餐'] } },
 ];
 
 // ===== 状态 =====
