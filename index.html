@@ -1,0 +1,1577 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>特团筛选 - 美团特价团购</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+      background: #f3f4f6;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 24px 16px;
+      gap: 24px;
+    }
+    @media (min-width: 900px) {
+      body { flex-direction: row; align-items: flex-start; justify-content: center; padding: 32px 24px; }
+    }
+
+    /* ===== PHONE WRAP (label + shell) ===== */
+    .phone-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .version-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+      background: #fff;
+      border-radius: 999px;
+      padding: 6px 14px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      border: 1px solid #e5e7eb;
+    }
+    .version-label .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .dot-a { background: #ec4899; }
+    .dot-b { background: #8b5cf6; }
+
+    /* ===== PHONE SHELL ===== */
+    #app, #app2, #app3 {
+      width: 375px;
+      background: #fff;
+      height: 780px;
+      overflow-y: auto;
+      position: relative;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    #app::-webkit-scrollbar, #app2::-webkit-scrollbar, #app3::-webkit-scrollbar { display: none; }
+    #app, #app2, #app3 { scrollbar-width: none; }
+
+    /* ===== HEADER ===== */
+    .header {
+      padding: 40px 16px 12px;
+      flex-shrink: 0;
+    }
+    .header-a { background: linear-gradient(to right, #ec4899, #db2777); }
+    .header-b { background: linear-gradient(to right, #8b5cf6, #7c3aed); }
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #fff;
+      margin-bottom: 12px;
+    }
+    .status-bar .time { font-weight: 600; font-size: 14px; }
+    .status-icons { display: flex; align-items: center; gap: 6px; }
+    .battery {
+      width: 18px; height: 12px;
+      border: 1.5px solid rgba(255,255,255,0.9);
+      border-radius: 2px;
+      position: relative;
+    }
+    .battery::after {
+      content: '';
+      position: absolute;
+      right: -4px; top: 3px;
+      width: 2px; height: 6px;
+      background: rgba(255,255,255,0.9);
+      border-radius: 0 1px 1px 0;
+    }
+    .battery-fill {
+      position: absolute;
+      left: 1px; top: 1px; bottom: 1px;
+      width: 70%;
+      background: rgba(255,255,255,0.9);
+      border-radius: 1px;
+    }
+    .wifi-icon {
+      width: 16px; height: 12px;
+      background: rgba(255,255,255,0.9);
+      border-radius: 2px;
+    }
+    .location-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #fff;
+      padding-bottom: 4px;
+    }
+    .location-pill {
+      display: flex;
+      align-items: center;
+      background: rgba(255,255,255,0.15);
+      border-radius: 999px;
+      padding: 6px 12px;
+      cursor: pointer;
+      backdrop-filter: blur(4px);
+      gap: 4px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .cart-btn {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+    }
+    .search-bar {
+      background: #fff;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      padding: 8px 16px;
+      margin-top: 12px;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .search-bar span { color: #9ca3af; font-size: 14px; }
+
+    /* ===== STICKY BAR ===== */
+    #stickyBar, #stickyBarB {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: #fff;
+      flex-shrink: 0;
+      transition: box-shadow 0.2s;
+    }
+    .tabs {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      padding: 12px 16px;
+      border-bottom: 1px solid #f3f4f6;
+      overflow-x: auto;
+      white-space: nowrap;
+      font-size: 14px;
+      color: #4b5563;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab-active {
+      font-weight: 700;
+      color: #111827;
+      border-bottom: 2px solid #ec4899;
+      padding-bottom: 4px;
+      margin-bottom: -1px;
+    }
+    .tab-active-b {
+      font-weight: 700;
+      color: #111827;
+      border-bottom: 2px solid #8b5cf6;
+      padding-bottom: 4px;
+      margin-bottom: -1px;
+    }
+    .quick-filters {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-bottom: 1px solid #f3f4f6;
+      overflow-x: auto;
+      white-space: nowrap;
+      background: #fff;
+    }
+    .quick-filters::-webkit-scrollbar { display: none; }
+    .qchip {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      background: #f3f4f6;
+      color: #374151;
+      border: none;
+      white-space: nowrap;
+      user-select: none;
+      transition: all 0.15s;
+    }
+    .qchip.active { background: #fdf2f8; color: #db2777; font-weight: 700; }
+    .qchip.active-b { background: #f5f3ff; color: #7c3aed; font-weight: 700; }
+
+    /* ===== FILTER DROPDOWN ===== */
+    #filterBackdrop, #filterBackdropB {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0; right: 0;
+      height: 1000px;
+      background: rgba(0,0,0,0.4);
+      z-index: 10;
+    }
+    #filterPanel, #filterPanelB {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0; right: 0;
+      background: #fff;
+      z-index: 20;
+      border-radius: 0 0 16px 16px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+      max-height: 480px;
+      overflow: hidden;
+      flex-direction: column;
+    }
+    #filterPanel.open, #filterPanelB.open { display: flex; }
+    #filterBackdrop.open, #filterBackdropB.open { display: block; }
+    #filterScroll, #filterScrollB {
+      overflow-y: auto;
+      flex: 1;
+      padding: 16px 16px 80px;
+    }
+    #filterScroll::-webkit-scrollbar, #filterScrollB::-webkit-scrollbar { display: none; }
+    .fgroup { margin-bottom: 20px; }
+    .fgroup-title { font-size: 11px; color: #9ca3af; font-weight: 500; margin-bottom: 10px; }
+    .foptions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .fopt {
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid transparent;
+      background: #f9fafb;
+      color: #374151;
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .fopt:hover { background: #f3f4f6; }
+    .fopt.sel { background: #fdf2f8; border-color: #fbcfe8; color: #db2777; }
+    .fopt.sel-b { background: #f5f3ff; border-color: #ddd6fe; color: #7c3aed; }
+    #filterActions, #filterActionsB {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      padding: 12px 12px 24px;
+      background: #fff;
+      border-top: 1px solid #f3f4f6;
+      display: flex;
+      gap: 12px;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+      z-index: 21;
+    }
+    .btn-reset {
+      flex: 1; padding: 12px; border-radius: 999px;
+      background: #f3f4f6; color: #374151;
+      font-weight: 500; font-size: 14px; border: none; cursor: pointer;
+    }
+    .btn-reset:hover { background: #e5e7eb; }
+    .btn-confirm {
+      flex: 2; padding: 12px; border-radius: 999px;
+      background: #db2777; color: #fff;
+      font-weight: 500; font-size: 14px; border: none; cursor: pointer;
+      box-shadow: 0 4px 12px rgba(219,39,119,0.25);
+    }
+    .btn-confirm:hover { background: #be185d; }
+    .btn-confirm-b {
+      flex: 2; padding: 12px; border-radius: 999px;
+      background: #7c3aed; color: #fff;
+      font-weight: 500; font-size: 14px; border: none; cursor: pointer;
+      box-shadow: 0 4px 12px rgba(124,58,237,0.25);
+    }
+    .btn-confirm-b:hover { background: #6d28d9; }
+
+    /* ===== FEED AREA ===== */
+    #feedArea, #feedAreaB, #feedAreaC {
+      flex: 1;
+      background: #f9fafb;
+      padding: 12px;
+      position: relative;
+      z-index: 0;
+    }
+
+    /* ===== SUGGESTION BANNER ===== */
+    #suggestionBanner {
+      display: none;
+      margin-bottom: 12px;
+    }
+    .sug-inner {
+      background: linear-gradient(to right, #fdf2f8, #fff7ed);
+      border-radius: 12px;
+      padding: 12px;
+      border: 1px solid #fbcfe8;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      position: relative;
+      padding-right: 36px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .sug-inner:active { transform: scale(0.98); }
+    .sug-close {
+      position: absolute; right: 8px; top: 50%;
+      transform: translateY(-50%);
+      background: none; border: none; cursor: pointer;
+      color: #9ca3af; padding: 8px;
+    }
+
+    /* ===== FEED CARD ===== */
+    .feed-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      gap: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+      margin-bottom: 12px;
+    }
+    .feed-img {
+      width: 110px; height: 110px;
+      border-radius: 12px;
+      object-fit: cover;
+      flex-shrink: 0;
+      border: 1px solid #f3f4f6;
+    }
+    .feed-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-width: 0;
+    }
+    .feed-brand-row {
+      display: flex;
+      align-items: center;
+      font-size: 11px;
+      color: #9ca3af;
+      margin-bottom: 4px;
+      gap: 4px;
+    }
+    .rebuy-badge {
+      font-size: 10px; color: #db2777;
+      background: #fdf2f8; border: 1px solid #fbcfe8;
+      padding: 1px 5px; border-radius: 4px; line-height: 1.4; flex-shrink: 0;
+    }
+    .feed-brand { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .feed-title {
+      font-weight: 700; color: #111827; font-size: 14px; line-height: 1.4;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .feed-stats { font-size: 10px; color: #9ca3af; margin-top: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .feed-location { font-size: 10px; color: #d1d5db; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .feed-bottom { margin-top: 8px; position: relative; height: 52px; }
+    .price-row { position: absolute; bottom: 16px; left: 0; display: flex; align-items: baseline; gap: 4px; }
+    .price-current { color: #db2777; font-weight: 700; font-size: 20px; line-height: 1; }
+    .price-currency { font-size: 13px; font-weight: 500; }
+    .price-old { color: #d1d5db; font-size: 11px; text-decoration: line-through; }
+    .discount-tag {
+      font-size: 10px; color: #f472b6; font-weight: 500;
+      position: absolute; bottom: 0; left: 0;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      max-width: calc(100% - 44px);
+    }
+    .special-tag {
+      position: absolute; right: 0; bottom: 44px;
+      background: #ec4899; color: #fff;
+      font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: 500;
+    }
+    .grab-btn {
+      position: absolute; right: 0; bottom: 0;
+      width: 34px; height: 34px;
+      background: #db2777; color: #fff;
+      border: none; border-radius: 10px;
+      font-size: 14px; font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(219,39,119,0.3);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .grab-btn:hover { background: #be185d; }
+
+    /* ===== FOOTER TIP ===== */
+    .footer-tip { text-align: center; padding: 16px; font-size: 14px; color: #6b7280; margin-bottom: 24px; }
+    .footer-tip .pink { color: #db2777; font-weight: 500; cursor: pointer; background: none; border: none; font-size: 14px; }
+
+    /* ===== EMPTY STATE ===== */
+    .empty-state {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 48px 16px; text-align: center;
+    }
+    .empty-state p { color: #6b7280; font-size: 14px; font-weight: 500; }
+    .empty-state button {
+      margin-top: 12px; background: #fdf2f8; color: #db2777;
+      border: none; padding: 10px 20px; border-radius: 999px;
+      font-size: 14px; font-weight: 700; cursor: pointer;
+    }
+
+    /* ===== DEMO CONSOLE ===== */
+    #console {
+      position: fixed;
+      bottom: 16px; right: 16px;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+      border: 1px solid #f3f4f6;
+      padding: 20px;
+      min-width: 280px;
+      z-index: 60;
+    }
+    @media (min-width: 768px) {
+      #console { position: static; margin-top: 96px; margin-left: 32px; flex-shrink: 0; }
+    }
+    .console-header { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+    .console-title { font-weight: 700; color: #111827; border-bottom: 1px solid #fbcfe8; padding-bottom: 2px; }
+    .console-label { font-size: 11px; font-weight: 500; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
+    .console-suggestions { display: flex; flex-direction: column; gap: 10px; }
+    .console-btn {
+      background: linear-gradient(to right, #fdf2f8, #fff7ed);
+      padding: 12px 16px; border-radius: 12px;
+      font-size: 14px; font-weight: 700; color: #9d174d;
+      border: 1px solid #fbcfe8;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: space-between;
+      transition: all 0.15s; text-align: left; width: 100%;
+    }
+    .console-btn:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); transform: translateY(-1px); }
+    .console-divider { height: 1px; background: #f3f4f6; margin: 16px 0; }
+    .console-clear {
+      width: 100%; padding: 10px; border-radius: 8px;
+      background: #f3f4f6; color: #4b5563;
+      font-size: 14px; font-weight: 700; border: none; cursor: pointer;
+    }
+    .console-clear:hover { background: #e5e7eb; }
+
+    /* SVG helpers */
+    .icon { display: inline-block; vertical-align: middle; }
+
+    /* ===== VERSION C: 脑洞版 ===== */
+    .dot-c { background: #10b981; }
+    .header-c { background: linear-gradient(to right, #10b981, #059669); }
+    .tab-active-c {
+      font-weight: 700; color: #111827;
+      border-bottom: 2px solid #10b981;
+      padding-bottom: 4px; margin-bottom: -1px;
+    }
+    /* 场景chip激活态（复用 .qchip 基础样式，只覆盖激活色） */
+    #chipSceneC.active-c { background: #ecfdf5; color: #059669; font-weight: 700; }
+    /* 刷新按钮：正方形小chip */
+    #chipRefreshC { padding: 6px 9px; }
+    #chipRefreshC:hover { background: #f0fdf4; color: #059669; }
+  </style>
+</head>
+<body>
+
+<!-- ===== PHONE A: 原版 ===== -->
+<div class="phone-wrap">
+  <div class="version-label"><span class="dot dot-a"></span>原版筛选（6维）</div>
+<div id="app">
+
+  <!-- HEADER -->
+  <div class="header header-a">
+    <div class="status-bar">
+      <span class="time">14:00</span>
+      <div class="status-icons">
+        <div class="battery"><div class="battery-fill"></div></div>
+        <div class="wifi-icon"></div>
+      </div>
+    </div>
+    <div class="location-row">
+      <div class="location-pill">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        望京 SOHO
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="cart-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 001.99 1.61h9.72a2 2 0 001.99-1.61L23 6H6"/></svg>
+      </div>
+    </div>
+    <div class="search-bar">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="2" style="margin-right:8px;flex-shrink:0;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <span>瑞幸咖啡</span>
+    </div>
+  </div>
+
+  <!-- STICKY BAR -->
+  <div id="stickyBar">
+    <div class="tabs">
+      <span class="tab-active">推荐</span>
+      <span>美食</span>
+      <span>奶茶咖啡</span>
+      <span>休闲玩乐</span>
+      <span>超市便利</span>
+      <span>变美健康</span>
+    </div>
+    <div class="quick-filters">
+      <button class="qchip" id="chipDistance" onclick="toggleDistance()">附近500m</button>
+      <button class="qchip" id="chipFilter" onclick="toggleFilterPanel()">
+        筛选
+        <svg id="filterArrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="transition:transform 0.2s;"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <button class="qchip">我常买</button>
+      <button class="qchip">百元大餐</button>
+      <button class="qchip">库迪超燃椰</button>
+      <button class="qchip">1分拼团</button>
+    </div>
+
+    <!-- FILTER BACKDROP -->
+    <div id="filterBackdrop" onclick="closeFilterPanel()"></div>
+
+    <!-- FILTER PANEL -->
+    <div id="filterPanel">
+      <div id="filterScroll"></div>
+      <div id="filterActions">
+        <button class="btn-reset" onclick="handleReset()">重置</button>
+        <button class="btn-confirm" onclick="handleConfirm()">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEED AREA -->
+  <div id="feedArea">
+    <!-- SUGGESTION BANNER -->
+    <div id="suggestionBanner"></div>
+    <!-- CARDS -->
+    <div id="feedCards"></div>
+  </div>
+</div>
+</div><!-- end phone-wrap A -->
+
+<!-- ===== PHONE B: 简化版 ===== -->
+<div class="phone-wrap">
+  <div class="version-label"><span class="dot dot-b"></span>简化版筛选（2维）</div>
+  <div id="app2">
+
+    <!-- HEADER B -->
+    <div class="header header-b">
+      <div class="status-bar">
+        <span class="time">14:00</span>
+        <div class="status-icons">
+          <div class="battery"><div class="battery-fill"></div></div>
+          <div class="wifi-icon"></div>
+        </div>
+      </div>
+      <div class="location-row">
+        <div class="location-pill">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          望京 SOHO
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="cart-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 001.99 1.61h9.72a2 2 0 001.99-1.61L23 6H6"/></svg>
+        </div>
+      </div>
+      <div class="search-bar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" style="margin-right:8px;flex-shrink:0;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <span>瑞幸咖啡</span>
+      </div>
+    </div>
+
+    <!-- STICKY BAR B -->
+    <div id="stickyBarB">
+      <div class="tabs">
+        <span class="tab-active-b">推荐</span>
+        <span>美食</span>
+        <span>奶茶咖啡</span>
+        <span>休闲玩乐</span>
+        <span>超市便利</span>
+        <span>变美健康</span>
+      </div>
+      <div class="quick-filters">
+        <button class="qchip" id="chipDistanceB" onclick="toggleDistanceB()">附近500m</button>
+        <button class="qchip" id="chipFilterB" onclick="toggleFilterPanelB()">
+          筛选
+          <svg id="filterArrowB" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="transition:transform 0.2s;"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <button class="qchip">我常买</button>
+        <button class="qchip">百元大餐</button>
+        <button class="qchip">库迪超燃椰</button>
+        <button class="qchip">1分拼团</button>
+      </div>
+
+      <!-- FILTER BACKDROP B -->
+      <div id="filterBackdropB" onclick="closeFilterPanelB()"></div>
+
+      <!-- FILTER PANEL B -->
+      <div id="filterPanelB">
+        <div id="filterScrollB"></div>
+        <div id="filterActionsB">
+          <button class="btn-reset" onclick="handleResetB()">重置</button>
+          <button class="btn-confirm-b" onclick="handleConfirmB()">确认</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- FEED AREA B -->
+    <div id="feedAreaB">
+      <div id="suggestionBannerB"></div>
+      <div id="feedCardsB"></div>
+    </div>
+
+  </div>
+</div><!-- end phone-wrap B -->
+
+<!-- ===== PHONE C: 脑洞版 ===== -->
+<div class="phone-wrap">
+  <div class="version-label"><span class="dot dot-c"></span>脑洞版（场景快筛）</div>
+  <div id="app3">
+
+    <!-- HEADER C -->
+    <div class="header header-c">
+      <div class="status-bar">
+        <span class="time">14:00</span>
+        <div class="status-icons">
+          <div class="battery"><div class="battery-fill"></div></div>
+          <div class="wifi-icon"></div>
+        </div>
+      </div>
+      <div class="location-row">
+        <div class="location-pill">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          望京 SOHO
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="cart-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 001.99 1.61h9.72a2 2 0 001.99-1.61L23 6H6"/></svg>
+        </div>
+      </div>
+      <div class="search-bar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" style="margin-right:8px;flex-shrink:0;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <span>瑞幸咖啡</span>
+      </div>
+    </div>
+
+    <!-- STICKY BAR C -->
+    <div id="stickyBarC">
+      <div class="tabs">
+        <span class="tab-active-c">推荐</span>
+        <span>美食</span>
+        <span>奶茶咖啡</span>
+        <span>休闲玩乐</span>
+        <span>超市便利</span>
+        <span>变美健康</span>
+      </div>
+      <!-- quick-filters：和 A 版结构完全一致，只是「筛选」换成动态场景chip -->
+      <div class="quick-filters">
+        <button class="qchip" id="chipDistanceC" onclick="toggleDistanceC()">附近500m</button>
+        <!-- 动态场景 chip：替代「筛选∨」 -->
+        <button class="qchip" id="chipSceneC" onclick="toggleSceneActiveC()">
+          <span id="chipSceneEmojiC"></span>
+          <span id="chipSceneLabelC">加载中…</span>
+          <svg id="chipSceneArrowC" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="transition:transform 0.2s;flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <!-- 刷新按钮 -->
+        <button class="qchip" id="chipRefreshC" onclick="refreshSceneC()" title="换一个场景推荐">
+          <svg id="refreshIconC" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="transition:transform 0.4s;"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        </button>
+        <button class="qchip">我常买</button>
+        <button class="qchip">百元大餐</button>
+        <button class="qchip">库迪超燃椰</button>
+      </div>
+    </div>
+
+    <!-- FEED AREA C -->
+    <div id="feedAreaC">
+      <div id="feedCardsC"></div>
+    </div>
+
+  </div>
+</div><!-- end phone-wrap C -->
+
+<!-- ===== DEMO CONSOLE ===== -->
+<div id="console">
+  <div class="console-header">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    <span class="console-title">演示控制台</span>
+  </div>
+  <div class="console-label">快捷场景推荐</div>
+  <div class="console-suggestions">
+    <button class="console-btn" onclick="triggerBoth(0)">
+      ☕️ 低价下午茶
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f9a8d4" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+    <button class="console-btn" onclick="triggerBoth(1)">
+      👫 约会双人餐
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f9a8d4" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+  </div>
+  <div class="console-divider"></div>
+  <div class="console-label" style="margin-bottom:8px;">脑洞版场景刷新</div>
+  <button class="console-btn" onclick="refreshSceneC()" style="background:linear-gradient(to right,#ecfdf5,#f0fdf4);border-color:#a7f3d0;color:#065f46;margin-bottom:12px;">
+    <span id="consoleScenePreviewC" style="font-size:13px;"></span>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+  </button>
+  <div class="console-divider"></div>
+  <button class="console-clear" onclick="clearBoth()">一键清除所有筛选</button>
+</div>
+
+<script>
+// ===== DATA =====
+const FILTER_CONFIG = [
+  { id:"price", title:"用餐价格", type:"single", options:["10元以下","10-20元","20-30元","30-50元","50-100元","100-200元","200元以上"] },
+  { id:"tags",  title:"特团标签", type:"multi",  options:["加倍补","新品上新","先用后付","7日新品","评价高"] },
+  { id:"time",  title:"使用时段", type:"single", options:["现在可用","节假日可用"] },
+  { id:"people",title:"用餐人数", type:"single", options:["单人餐","双人餐","三人餐","多人餐"] },
+  { id:"scene", title:"使用场景", type:"single", options:["早餐","午餐","晚餐","夜宵","下午茶","工作餐"] },
+  { id:"category",title:"品类",  type:"multi",  options:["奶茶","咖啡","正餐","自助餐","火锅","面包甜点","零食零售","西式快餐","中式快餐"] }
+];
+
+const SUGGESTIONS = [
+  { name:"☕️ 低价下午茶", filters:{ scene:["下午茶"], category:["奶茶","咖啡","面包甜点"] }, customFilter: "lowPrice" },
+  { name:"👫 约会双人餐",  filters:{ people:["双人餐"], tags:["评价高"], price:["100-200元","200元以上"], category:["正餐","自助餐"] } }
+];
+
+// 简化版对应映射：直接设置 selectedFiltersB，不在面板中显示选中态
+const SUGGESTIONS_B = [
+  {
+    name: "低价下午茶",
+    filters: { priceTag:[], sceneAndPeople:[] },
+    customFilter: "lowPriceAfternoonTea",
+    hint: "低价下午茶（按品类人均判断）"
+  },
+  {
+    name: "双人高评价",
+    filters: { priceTag:["评价高"], sceneAndPeople:["双人餐"] },
+    hint: "场景与人数 → 双人餐 · 价格与标签 → 评价高"
+  }
+];
+
+// ===== 低价判断：按品类 + 人均 =====
+// 奶咖：≤10元；轻快：≤20元；正餐/自助/火锅：人均≤80元
+function isLowPrice(feed) {
+  const cats = feed.categories;
+  const price = feed.price;
+  const isCafe = cats.includes('奶茶') || cats.includes('咖啡');
+  const isMeal = cats.includes('正餐') || cats.includes('自助餐') || cats.includes('火锅');
+  if (isCafe) return price <= 10;
+  if (isMeal) {
+    const people = cats.includes('多人餐') ? 4
+                 : cats.includes('三人餐') ? 3
+                 : cats.includes('双人餐') ? 2 : 1;
+    return (price / people) <= 80;
+  }
+  // 轻快类
+  return price <= 20;
+}
+
+// C 侧场景 id 与控制台按钮的映射
+const CONSOLE_TO_SCENE_C = ['afternoon-tea', 'dinner-date'];
+
+function triggerBoth(idx) {
+  // A/B 侧：弹出 banner，等用户点击后才真正筛选
+  triggerSuggestion(idx);
+  triggerSuggestionB(idx);
+  // C 侧：直接激活对应场景 chip（chip 本身即是确认载体）
+  const sceneId = CONSOLE_TO_SCENE_C[idx];
+  if (sceneId) triggerSceneC(sceneId);
+}
+
+function clearBoth() {
+  customFilterA = null;
+  customFilterB = null;
+  clearAllFilters();
+  clearAllFiltersB();
+  clearAllFiltersC();
+}
+
+const TAG_MAP = {
+  "评价高":["评价高分","评价高"],
+  "新品上新":["新品尝鲜","新品上新","7日新品"],
+  "7日新品":["新品尝鲜","7日新品"],
+  "先用后付":["先用后付","买了直接用","买完直接用"],
+  "加倍补":["加倍补","现在可用","节假日可用"],
+  "工作餐":["工作餐","午餐"],
+  "200元以上":["200以上","200元以上","100-200元"],
+  "10-20元":["10-20元","10元以下"],
+  "面包甜点":["面包甜点","咖啡"],
+  "西式快餐":["西式快餐","正餐"],
+  "中式快餐":["中式快餐","正餐"],
+  "零食零售":["零食零售","10元以下"]
+};
+
+const ALL_FEEDS = [
+  {id:1,rebuy:true,title:"【特团特惠】美式 4 选 1",brand:"库迪咖啡(望京东地铁站店)",stats:"爆卖 223 万+  95%好评  秒提·到店取",location:"568m 库迪咖啡",price:3.99,oldPrice:20,discountTag:"全网低价·直降 80%",img:"https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=200&h=200&fit=crop",categories:["咖啡","10元以下","单人餐","买了直接用","现在可用","评价高分","下午茶","早餐"]},
+  {id:2,rebuy:true,title:"【草原烧烤】草原特色内蒙烤串",brand:"草原传奇新蒙派火锅",stats:"100%好评  全国可用  免预约  退改无忧",location:"2.2km 草原传奇",price:59,oldPrice:94,discountTag:"超值价·省 35 元",specialTag:"周四必吃",img:"https://images.unsplash.com/photo-1544025162-811114cd3b7d?w=200&h=200&fit=crop",categories:["夜宵","正餐","火锅","多人餐","50-100元","节假日可用","评价高分","晚餐"]},
+  {id:3,rebuy:true,title:"伊利喝柠檬果汁特惠",brand:"便利蜂",stats:"爆卖 4 万+  免预约  退改无忧",location:"<100m 便利蜂(恒电大厦店)",price:1,oldPrice:4.8,img:"https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=200&h=200&fit=crop",categories:["10元以下","买了直接用","现在可用","单人餐"]},
+  {id:4,rebuy:false,title:"双人豪华海鲜自助晚餐",brand:"铭门盛宴海鲜艺术姿造",stats:"99%好评  需提前1天预约",location:"3.5km 铭门盛宴",price:398,oldPrice:598,discountTag:"特惠直降 200 元",img:"https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=200&h=200&fit=crop",categories:["自助餐","正餐","双人餐","200以上","晚餐","节假日可用"]},
+  {id:5,rebuy:false,title:"【人气上新】霸气芝士草莓",brand:"奈雪的茶",stats:"月销 1万+  免预约  秒提",location:"800m 奈雪的茶",price:18.9,oldPrice:29,discountTag:"限时 6.5 折",img:"https://images.unsplash.com/photo-1577805947697-89e18249d767?w=200&h=200&fit=crop",categories:["奶茶","10-20元","下午茶","新品尝鲜","现在可用","单人餐"]},
+  {id:6,rebuy:true,title:"营养早餐三明治+咖啡套餐",brand:"星巴克",stats:"98%好评  营业至晚10点",location:"1.2km 星巴克",price:25.9,oldPrice:42,discountTag:"限时 6 折",img:"https://images.unsplash.com/photo-1484723091791-c031c9bf9368?w=200&h=200&fit=crop",categories:["咖啡","20-30元","早餐","单人餐","现在可用","买了直接用","评价高分","下午茶"]},
+  {id:7,rebuy:false,title:"招牌麻辣火锅3人餐",brand:"海底捞火锅",stats:"必吃榜  极速退款",location:"1.5km 海底捞(望京新世界店)",price:238,oldPrice:328,discountTag:"省 90 元",img:"https://images.unsplash.com/photo-1563379926898-05f4575a44d8?w=200&h=200&fit=crop",categories:["火锅","正餐","三人餐","200以上","晚餐","节假日可用","现在可用","评价高分"]},
+  {id:8,rebuy:true,title:"经典午餐肉丝盖饭",brand:"田老师红烧肉",stats:"月销 5000+ 带饮品",location:"400m 田老师(望京店)",price:22,oldPrice:35,discountTag:"特价午餐",img:"https://images.unsplash.com/photo-1564834724105-918b73d1b9e0?w=200&h=200&fit=crop",categories:["正餐","20-30元","午餐","单人餐","买了直接用","现在可用"]},
+  {id:9,rebuy:false,title:"双人烤肉特惠套餐",brand:"汉拿山韩式烤肉",stats:"免预约 节假日通用",location:"2.1km 汉拿山",price:158,oldPrice:228,discountTag:"立减 70",img:"https://images.unsplash.com/photo-1544025162-811114cd3b7d?w=200&h=200&fit=crop",categories:["正餐","双人餐","100-200元","午餐","晚餐","节假日可用","现在可用"]},
+  {id:10,rebuy:false,title:"新品杨枝甘露",brand:"茶百道",stats:"月售 8000+ 新品尝鲜",location:"650m 茶百道",price:15,oldPrice:22,discountTag:"上新 6.8折",img:"https://images.unsplash.com/photo-1626897505254-e0f811aa9bf7?w=200&h=200&fit=crop",categories:["奶茶","10-20元","下午茶","新品尝鲜","单人餐","现在可用","买了直接用"]},
+  {id:11,rebuy:true,title:"4人欢聚火锅套餐",brand:"呷哺呷哺",stats:"老字号 评价 9.2",location:"900m 呷哺",price:188,oldPrice:258,discountTag:"多人欢聚省 70",img:"https://images.unsplash.com/photo-1582295528077-9df041bf0641?w=200&h=200&fit=crop",categories:["火锅","多人餐","100-200元","晚餐","节假日可用","评价高分"]},
+  {id:12,rebuy:false,title:"单人单锅小火锅",brand:"吉野家",stats:"夜宵特供",location:"300m 吉野家(方恒店)",price:45,oldPrice:65,discountTag:"夜猫子特权",img:"https://images.unsplash.com/photo-1603569283847-aa295f0d016a?w=200&h=200&fit=crop",categories:["正餐","30-50元","单人餐","夜宵","现在可用","买了直接用"]},
+  {id:13,rebuy:false,title:"工作日单人自助午餐",brand:"好伦哥",stats:"限时秒杀",location:"2.5km 好伦哥",price:59,oldPrice:89,discountTag:"秒杀 6.6折",img:"https://images.unsplash.com/photo-1544025162-811114cd3b7d?w=200&h=200&fit=crop",categories:["自助餐","50-100元","单人餐","午餐","买完直接用","现在可用"]},
+  {id:14,rebuy:true,title:"抹茶星冰乐双杯",brand:"星巴克",stats:"双杯分享更划算",location:"1.2km 星巴克",price:52,oldPrice:76,discountTag:"第二杯半价",img:"https://images.unsplash.com/photo-1484723091791-c031c9bf9368?w=200&h=200&fit=crop",categories:["咖啡","50-100元","双人餐","下午茶","节假日可用","评价高分"]},
+  {id:15,rebuy:false,title:"超级巨无霸双人套餐",brand:"麦当劳",stats:"爆卖 10万+",location:"500m 麦当劳",price:68,oldPrice:95,discountTag:"限时特价",img:"https://images.unsplash.com/photo-1625938146369-adc83368bdaf?w=200&h=200&fit=crop",categories:["正餐","50-100元","双人餐","午餐","晚餐","夜宵","现在可用","买了直接用"]},
+  {id:16,rebuy:true,title:"双人经典奶冻奶茶",brand:"一点点",stats:"免预约 96%好评",location:"800m 一点点(望京店)",price:28,oldPrice:38,discountTag:"奶茶人气榜",img:"https://images.unsplash.com/photo-1558160074-4d7d8bdf4256?w=200&h=200&fit=crop",categories:["奶茶","20-30元","双人餐","下午茶","现在可用","买了直接用"]},
+  {id:17,rebuy:false,title:"高颜值下午茶双人套餐",brand:"Wagas",stats:"评分 9.8 优质环境",location:"1.1km Wagas(颐堤港店)",price:118,oldPrice:168,discountTag:"下午茶精选",img:"https://images.unsplash.com/photo-1495474472207-464a8d960c82?w=200&h=200&fit=crop",categories:["咖啡","正餐","100-200元","双人餐","下午茶","节假日可用","评价高分"]},
+  {id:18,rebuy:false,title:"川味毛肚火锅单人餐",brand:"珮姐老火锅",stats:"月售2000+ 新品尝鲜",location:"3km 珮姐老火锅",price:88,oldPrice:128,discountTag:"单人火锅 6.8折",img:"https://images.unsplash.com/photo-1563379926898-05f4575a44d8?w=200&h=200&fit=crop",categories:["火锅","50-100元","单人餐","晚餐","夜宵","新品尝鲜","买完直接用"]},
+  {id:19,rebuy:true,title:"生椰拿铁+小蛋糕套餐",brand:"瑞幸咖啡",stats:"周边销量第1 买过3次",location:"100m 瑞幸(恒电大厦店)",price:19.9,oldPrice:38,discountTag:"特惠搭配",img:"https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=200&h=200&fit=crop",categories:["咖啡","10-20元","单人餐","早餐","下午茶","现在可用","买了直接用"]},
+  {id:20,rebuy:false,title:"海鲜自助午餐单人券",brand:"初色海鲜自助",stats:"五星推荐 免预约",location:"5km 初色自助火锅",price:148,oldPrice:198,discountTag:"午市特惠",img:"https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=200&h=200&fit=crop",categories:["自助餐","100-200元","单人餐","午餐","节假日可用","评价高分"]},
+  {id:21,rebuy:false,title:"特色和牛寿喜锅双人餐",brand:"伊豆野菜村",stats:"99%好评 需预约",location:"4km 野菜村(朝阳大悦城店)",price:258,oldPrice:358,discountTag:"省 100",img:"https://images.unsplash.com/photo-1563379926898-05f4575a44d8?w=200&h=200&fit=crop",categories:["火锅","正餐","自助餐","200以上","双人餐","晚餐","评价高分"]},
+  {id:22,rebuy:true,title:"清爽果茶大杯组合",brand:"喜茶",stats:"果茶热销 5000+",location:"700m 喜茶(望京店)",price:35,oldPrice:58,discountTag:"双杯 6折",img:"https://images.unsplash.com/photo-1558160074-4d7d8bdf4256?w=200&h=200&fit=crop",categories:["奶茶","30-50元","双人餐","下午茶","现在可用","买了直接用"]},
+  {id:23,rebuy:false,title:"全天候双人能量烤肉套餐",brand:"火炉火",stats:"免预约 96%好评",location:"2.5km 火炉火望京店",price:168,oldPrice:248,discountTag:"立省 80",img:"https://images.unsplash.com/photo-1544025162-811114cd3b7d?w=200&h=200&fit=crop",categories:["正餐","100-200元","双人餐","午餐","晚餐","现在可用"]},
+  {id:24,rebuy:false,title:"新品烤鸡+奶茶尝鲜套餐",brand:"肯德基",stats:"新品爆款 秒收",location:"450m 肯德基(望京新世界)",price:39,oldPrice:55,discountTag:"新品 7折",img:"https://images.unsplash.com/photo-1625938146369-adc83368bdaf?w=200&h=200&fit=crop",categories:["正餐","奶茶","30-50元","单人餐","晚餐","夜宵","新品尝鲜","买了直接用"]},
+  {id:25,rebuy:true,title:"牛肉米粉单人午餐",brand:"霸蛮湖南米粉",stats:"买过 1 次 100%好评",location:"150m 霸蛮(方恒店)",price:25,oldPrice:38,discountTag:"午间特价",img:"https://images.unsplash.com/photo-1564834724105-918b73d1b9e0?w=200&h=200&fit=crop",categories:["正餐","20-30元","单人餐","午餐","现在可用","买了直接用"]},
+  {id:26,rebuy:false,title:"招牌鸳鸯火锅4人餐",brand:"小龙坎",stats:"聚会必选",location:"3.2km 小龙坎",price:288,oldPrice:420,discountTag:"四人优惠",img:"https://images.unsplash.com/photo-1563379926898-05f4575a44d8?w=200&h=200&fit=crop",categories:["火锅","正餐","200以上","多人餐","晚餐","节假日可用"]},
+  {id:27,rebuy:false,title:"下午茶西式糕点套餐",brand:"好利来",stats:"甜品榜第2",location:"850m 好利来(望京SOHO)",price:49,oldPrice:65,discountTag:"颜值糕点",img:"https://images.unsplash.com/photo-1495474472207-464a8d960c82?w=200&h=200&fit=crop",categories:["下午茶","30-50元","单人餐","现在可用","买了直接用"]},
+  {id:28,rebuy:true,title:"早晨提神豆浆油条",brand:"桃园眷村",stats:"早餐必吃 95%好评",location:"900m 桃园眷村",price:15,oldPrice:22,discountTag:"低价早餐",img:"https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=200&h=200&fit=crop",categories:["早餐","10-20元","单人餐","现在可用"]},
+  {id:29,rebuy:false,title:"超值单人麻辣烫套餐",brand:"杨国福麻辣烫",stats:"夜宵好选择",location:"300m 杨国福(望京西园店)",price:22,oldPrice:30,discountTag:"特惠",img:"https://images.unsplash.com/photo-1564834724105-918b73d1b9e0?w=200&h=200&fit=crop",categories:["正餐","20-30元","单人餐","午餐","晚餐","夜宵","现在可用"]},
+  {id:30,rebuy:false,title:"自助烤肉海鲜单人晚餐",brand:"金釜山",stats:"无限畅吃 爆卖1万+",location:"4.5km 金釜山烤肉",price:88,oldPrice:118,discountTag:"畅吃晚餐",img:"https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=200&h=200&fit=crop",categories:["自助餐","正餐","50-100元","单人餐","晚餐","节假日可用"]},
+  {id:31,rebuy:true,title:"珍珠奶茶大杯",brand:"古茗",stats:"回购率高",location:"1.1km 古茗",price:12,oldPrice:18,discountTag:"现在买最划算",img:"https://images.unsplash.com/photo-1558160074-4d7d8bdf4256?w=200&h=200&fit=crop",categories:["奶茶","10-20元","单人餐","下午茶","现在可用","买了直接用"]},
+  {id:32,rebuy:false,title:"新中式国风茶饮",brand:"霸王茶姬",stats:"9.9分高赞",location:"2km 霸王茶姬",price:19,oldPrice:26,discountTag:"茶香四溢",img:"https://images.unsplash.com/photo-1558160074-4d7d8bdf4256?w=200&h=200&fit=crop",categories:["奶茶","10-20元","下午茶","现在可用","评价高分"]},
+  {id:33,rebuy:false,title:"网红韩国炸鸡双人餐",brand:"Vons 韩国炸鸡",stats:"夜市爆款",location:"2.8km Vons炸鸡",price:78,oldPrice:110,discountTag:"下酒必备",img:"https://images.unsplash.com/photo-1625938146369-adc83368bdaf?w=200&h=200&fit=crop",categories:["正餐","50-100元","双人餐","晚餐","夜宵","节假日可用"]},
+  {id:34,rebuy:true,title:"豪华和牛双人烤肉",brand:"牛角日本烧肉",stats:"品质好肉 评分9.7",location:"3.5km 牛角(丽都店)",price:328,oldPrice:480,discountTag:"尊享特惠",img:"https://images.unsplash.com/photo-1544025162-811114cd3b7d?w=200&h=200&fit=crop",categories:["正餐","200以上","双人餐","晚餐","评价高分","节假日可用"]},
+  {id:35,rebuy:false,title:"新品咖啡豆手冲套餐",brand:"Manner Coffee",stats:"极客优选",location:"150m Manner(保利店)",price:25,oldPrice:35,discountTag:"新品尝鲜",img:"https://images.unsplash.com/photo-1484723091791-c031c9bf9368?w=200&h=200&fit=crop",categories:["咖啡","20-30元","单人餐","早餐","下午茶","新品尝鲜","现在可用"]},
+  {id:36,rebuy:false,title:"养生清汤火锅2人餐",brand:"捞王锅物料理",stats:"秋季滋补",location:"4km 捞王",price:198,oldPrice:268,discountTag:"双人超省",img:"https://images.unsplash.com/photo-1563379926898-05f4575a44d8?w=200&h=200&fit=crop",categories:["火锅","100-200元","双人餐","晚餐","评价高分"]},
+  {id:37,rebuy:true,title:"工作日轻食沙拉",brand:"沙野轻食",stats:"减肥首选",location:"600m 沙野",price:28,oldPrice:42,discountTag:"减肥达人减14",img:"https://images.unsplash.com/photo-1564834724105-918b73d1b9e0?w=200&h=200&fit=crop",categories:["正餐","20-30元","单人餐","午餐","晚餐","现在可用"]},
+  {id:38,rebuy:false,title:"广式早茶双人套餐",brand:"唐宫海鲜舫",stats:"正宗风味 排队王",location:"2.3km 唐宫",price:158,oldPrice:220,discountTag:"早市特惠",img:"https://images.unsplash.com/photo-1495474472207-464a8d960c82?w=200&h=200&fit=crop",categories:["正餐","100-200元","双人餐","早餐","午餐","节假日可用"]},
+  {id:39,rebuy:false,title:"特大杯柠檬茶",brand:"LINLEE 林里",stats:"消暑神器",location:"500m 林里柠檬茶",price:15,oldPrice:22,discountTag:"买就送小黄鸭",img:"https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=200&h=200&fit=crop",categories:["奶茶","10-20元","单人餐","下午茶","夜宵","现在可用"]},
+  {id:40,rebuy:true,title:"豪华日料刺身自助",brand:"黑松白鹿",stats:"牡丹虾畅吃",location:"4.5km 黑松白鹿(望京店)",price:298,oldPrice:358,discountTag:"高端自助直降",img:"https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=200&h=200&fit=crop",categories:["自助餐","正餐","200以上","单人餐","晚餐","评价高分"]},
+  {id:41,rebuy:false,title:"现烤面包+拿铁咖啡",brand:"原麦山丘",stats:"人气早餐",location:"800m 原麦山丘",price:32,oldPrice:42,discountTag:"完美组合",img:"https://images.unsplash.com/photo-1484723091791-c031c9bf9368?w=200&h=200&fit=crop",categories:["咖啡","正餐","30-50元","单人餐","早餐","下午茶","现在可用"]},
+  {id:42,rebuy:true,title:"正宗重庆毛血旺单人快餐",brand:"渝是乎",stats:"辣的过瘾",location:"400m 渝是乎(新荟城)",price:35,oldPrice:48,discountTag:"单人餐特护",img:"https://images.unsplash.com/photo-1564834724105-918b73d1b9e0?w=200&h=200&fit=crop",categories:["正餐","30-50元","单人餐","午餐","晚餐","买了直接用"]},
+  {id:43,rebuy:false,title:"六人欢聚龙虾烧烤套餐",brand:"胡大饭馆",stats:"簋街必吃",location:"8km 胡大",price:498,oldPrice:650,discountTag:"嗨吃特供",img:"https://images.unsplash.com/photo-1544025162-811114cd3b7d?w=200&h=200&fit=crop",categories:["正餐","夜宵","200以上","多人餐","节假日可用","评价高分"]},
+  {id:44,rebuy:false,title:"新品生椰燕麦拿铁",brand:"库迪咖啡",stats:"0乳糖 好吸收",location:"560m 库迪咖啡",price:12.9,oldPrice:29,discountTag:"新品尝鲜特价",img:"https://images.unsplash.com/photo-1484723091791-c031c9bf9368?w=200&h=200&fit=crop",categories:["咖啡","10-20元","单人餐","下午茶","新品尝鲜","买了直接用"]},
+  {id:45,rebuy:true,title:"特惠小火锅双人餐",brand:"呷哺呷哺",stats:"逛街必吃",location:"900m 呷哺呷哺",price:98,oldPrice:138,discountTag:"百元内超值",img:"https://images.unsplash.com/photo-1563379926898-05f4575a44d8?w=200&h=200&fit=crop",categories:["火锅","50-100元","双人餐","午餐","晚餐","买了直接用"]},
+  {id:46,rebuy:false,title:"五星级酒店单人自助",brand:"万豪酒店西餐厅",stats:"环境优雅 品质食材",location:"6km 望京万豪",price:258,oldPrice:388,discountTag:"品质大餐",img:"https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=200&h=200&fit=crop",categories:["自助餐","正餐","200以上","单人餐","晚餐","评价高分"]},
+  {id:47,rebuy:false,title:"新疆大盘鸡3人餐",brand:"巴依老爷",stats:"量大管饱",location:"1.2km 巴依老爷",price:128,oldPrice:188,discountTag:"三人分享价",img:"https://images.unsplash.com/photo-1564834724105-918b73d1b9e0?w=200&h=200&fit=crop",categories:["正餐","100-200元","三人餐","午餐","晚餐","现在可用"]},
+  {id:48,rebuy:true,title:"芝士奶盖茶饮",brand:"茶颜悦色",stats:"经典必喝",location:"2km 茶颜",price:18,oldPrice:22,discountTag:"好评99%",img:"https://images.unsplash.com/photo-1558160074-4d7d8bdf4256?w=200&h=200&fit=crop",categories:["奶茶","10-20元","单人餐","下午茶","评价高分"]},
+  {id:49,rebuy:false,title:"夜场烧烤啤酒4人趴",brand:"聚点串吧",stats:"营业至凌晨2点",location:"1.5km 聚点串吧",price:188,oldPrice:260,discountTag:"深夜狂欢价",img:"https://images.unsplash.com/photo-1544025162-811114cd3b7d?w=200&h=200&fit=crop",categories:["正餐","夜宵","100-200元","多人餐","现在可用"]},
+  {id:50,rebuy:true,title:"韩式炸酱面小吃单人套",brand:"流氓村",stats:"地道韩国味",location:"500m 流氓村",price:38,oldPrice:58,discountTag:"单人食特惠",img:"https://images.unsplash.com/photo-1564834724105-918b73d1b9e0?w=200&h=200&fit=crop",categories:["正餐","30-50元","单人餐","午餐","晚餐","买了直接用"]},
+  {id:51,rebuy:false,title:"网红脏脏包+冰美式",brand:"巴黎贝甜",stats:"火爆全网",location:"650m 巴黎贝甜",price:36,oldPrice:48,discountTag:"经典搭配省12",img:"https://images.unsplash.com/photo-1495474472207-464a8d960c82?w=200&h=200&fit=crop",categories:["咖啡","正餐","30-50元","单人餐","下午茶","早餐","现在可用"]},
+  {id:52,rebuy:false,title:"滋补鸽子汤双人火锅",brand:"唐宫",stats:"滋补暖胃",location:"3km 唐宫",price:188,oldPrice:268,discountTag:"温补严选",img:"https://images.unsplash.com/photo-1563379926898-05f4575a44d8?w=200&h=200&fit=crop",categories:["火锅","100-200元","双人餐","晚餐","节假日可用"]},
+  {id:53,rebuy:true,title:"轻食健康鸡胸肉拼盘",brand:"新元素",stats:"健康之选",location:"2km 新元素(丽都店)",price:68,oldPrice:88,discountTag:"健康无负担",img:"https://images.unsplash.com/photo-1564834724105-918b73d1b9e0?w=200&h=200&fit=crop",categories:["正餐","50-100元","单人餐","午餐","晚餐","评价高分"]},
+  {id:54,rebuy:false,title:"超大桶水果茶",brand:"书亦烧仙草",stats:"1L畅饮",location:"800m 书亦",price:18,oldPrice:25,discountTag:"巨无霸解渴",img:"https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=200&h=200&fit=crop",categories:["奶茶","10-20元","单人餐","下午茶","现在可用"]},
+  {id:55,rebuy:false,title:"星级意式双人西餐",brand:"TIAGO",stats:"约会圣地",location:"1.5km 颐堤港TIAGO",price:298,oldPrice:388,discountTag:"浪漫精选",img:"https://images.unsplash.com/photo-1495474472207-464a8d960c82?w=200&h=200&fit=crop",categories:["正餐","200以上","双人餐","晚餐","节假日可用","评价高分"]},
+  {id:56,rebuy:true,title:"老北京炸酱面单人餐",brand:"海碗居",stats:"地道老字号",location:"2.5km 海碗居",price:28,oldPrice:38,discountTag:"地道京味",img:"https://images.unsplash.com/photo-1564834724105-918b73d1b9e0?w=200&h=200&fit=crop",categories:["正餐","20-30元","单人餐","午餐","买了直接用","现在可用"]},
+  {id:57,rebuy:false,title:"日式寿喜烧海鲜自助",brand:"牛New寿喜烧",stats:"高性价比",location:"1km 望京诚盈中心",price:138,oldPrice:178,discountTag:"畅吃价",img:"https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=200&h=200&fit=crop",categories:["自助餐","火锅","100-200元","单人餐","午餐","晚餐"]},
+  {id:58,rebuy:false,title:"新品特浓黑糖波波冰",brand:"乐乐茶",stats:"高分新品",location:"1.2km 乐乐茶",price:22,oldPrice:28,discountTag:"新品9折",img:"https://images.unsplash.com/photo-1558160074-4d7d8bdf4256?w=200&h=200&fit=crop",categories:["奶茶","20-30元","新品尝鲜","单人餐","下午茶","买了直接用"]},
+  {id:59,rebuy:true,title:"招牌原味鸡+汉堡套餐",brand:"德克士",stats:"快餐优选",location:"400m 德克士",price:29,oldPrice:42,discountTag:"省13元",img:"https://images.unsplash.com/photo-1625938146369-adc83368bdaf?w=200&h=200&fit=crop",categories:["正餐","20-30元","单人餐","午餐","晚餐","买了直接用","现在可用"]},
+  {id:60,rebuy:false,title:"海鲜大咖4人聚会餐",brand:"宽板凳老灶火锅",stats:"麻辣鲜香",location:"3.5km 宽板凳",price:368,oldPrice:488,discountTag:"立减120",img:"https://images.unsplash.com/photo-1544025162-811114cd3b7d?w=200&h=200&fit=crop",categories:["火锅","正餐","200以上","多人餐","夜宵","节假日可用"]},
+  {id:61,rebuy:false,title:"全家福蛋糕甜品台",brand:"黑天鹅",stats:"生日庆典首选",location:"4km 黑天鹅",price:499,oldPrice:599,discountTag:"生日礼遇",img:"https://images.unsplash.com/photo-1495474472207-464a8d960c82?w=200&h=200&fit=crop",categories:["下午茶","正餐","200以上","多人餐","评价高分"]},
+  {id:62,rebuy:true,title:"冰镇话梅小番茄",brand:"便利蜂",stats:"周边热销小食",location:"<100m 便利蜂",price:8.8,oldPrice:12,discountTag:"尝鲜价",img:"https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=200&h=200&fit=crop",categories:["正餐","10元以下","单人餐","下午茶","买了直接用","现在可用"]},
+  {id:63,rebuy:false,title:"新品冷萃咖啡杯",brand:"Peet's Coffee",stats:"浓郁醇厚",location:"700m 皮爷咖啡",price:32,oldPrice:40,discountTag:"上新特惠",img:"https://images.unsplash.com/photo-1484723091791-c031c9bf9368?w=200&h=200&fit=crop",categories:["咖啡","30-50元","单人餐","新品尝鲜","下午茶"]},
+  {id:64,rebuy:false,title:"自助广式茶点单人",brand:"金鼎轩",stats:"点心无限点",location:"4km 金鼎轩",price:88,oldPrice:120,discountTag:"畅快吃点心",img:"https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=200&h=200&fit=crop",categories:["自助餐","正餐","50-100元","单人餐","早茶","午餐"]},
+  {id:65,rebuy:true,title:"酸菜鱼双人套餐",brand:"太二酸菜鱼",stats:"酸爽下饭",location:"2km 太二",price:138,oldPrice:180,discountTag:"双人热门精选",img:"https://images.unsplash.com/photo-1564834724105-918b73d1b9e0?w=200&h=200&fit=crop",categories:["正餐","100-200元","双人餐","晚餐","买了直接用","评价高分"]}
+];
+
+// ===== STATE =====
+let selectedFilters = { distance:[], price:[], tags:[], time:[], people:[], scene:[], category:[] };
+let isApplied = false;
+let isFilterOpen = false;
+let pendingSuggestion = null;
+let customFilterA = null; // 'lowPrice' | null
+
+// ===== HELPERS =====
+function getFilterCount() {
+  return FILTER_CONFIG.reduce((acc, g) => acc + (selectedFilters[g.id]?.length || 0), 0);
+}
+
+function matchesFeed(feed) {
+  // 自定义低价过滤层（叠加在普通筛选之上）
+  if (customFilterA === 'lowPrice' && !isLowPrice(feed)) return false;
+
+  const activeGroupIds = Object.keys(selectedFilters).filter(k => selectedFilters[k]?.length > 0);
+  if (!isApplied || activeGroupIds.length === 0) return customFilterA ? true : true;
+  return activeGroupIds.every(groupId => {
+    const opts = selectedFilters[groupId];
+    if (!opts || opts.length === 0) return true;
+    return opts.some(opt => {
+      const matchKeys = TAG_MAP[opt] || [opt];
+      return matchKeys.some(key => feed.categories.includes(key));
+    });
+  });
+}
+
+// ===== RENDER FILTER PANEL =====
+function renderFilterPanel() {
+  const panel = document.getElementById('filterPanel');
+  const backdrop = document.getElementById('filterBackdrop');
+  const chipFilter = document.getElementById('chipFilter');
+  const filterArrow = document.getElementById('filterArrow');
+  const count = getFilterCount();
+
+  // Update chip
+  chipFilter.classList.toggle('active', isFilterOpen || count > 0);
+  filterArrow.style.transform = isFilterOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+
+  // Update badge inside chip
+  let badge = chipFilter.querySelector('.fbadge');
+  if (count > 0) {
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.className = 'fbadge';
+      badge.style.cssText = 'margin-left:4px;padding:1px 5px;border-radius:9999px;background:#db2777;color:#fff;font-size:10px;';
+      chipFilter.insertBefore(badge, filterArrow);
+    }
+    badge.textContent = count;
+    filterArrow.style.display = 'none';
+  } else {
+    if (badge) badge.remove();
+    filterArrow.style.display = '';
+  }
+
+  if (!isFilterOpen) {
+    panel.classList.remove('open');
+    backdrop.classList.remove('open');
+    return;
+  }
+
+  panel.classList.add('open');
+  backdrop.classList.add('open');
+
+  // Build filter options
+  const scroll = document.getElementById('filterScroll');
+  scroll.innerHTML = FILTER_CONFIG.map(group => `
+    <div class="fgroup">
+      <div class="fgroup-title">${group.title}</div>
+      <div class="foptions">
+        ${group.options.map(opt => {
+          const sel = selectedFilters[group.id]?.includes(opt);
+          return `<button class="fopt${sel ? ' sel' : ''}" onclick="toggleOption('${group.id}','${opt}')">${opt}</button>`;
+        }).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+// ===== RENDER FEED =====
+function renderFeed() {
+  const container = document.getElementById('feedCards');
+  const filtered = ALL_FEEDS.filter(matchesFeed);
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <p>没有找到符合条件的商品</p>
+        <button onclick="toggleFilterPanel()">换个条件试试</button>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map(feed => `
+    <div class="feed-card">
+      <img class="feed-img" src="${feed.img}" alt="${feed.title}" onerror="this.src='https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=200&h=200&fit=crop'" />
+      <div class="feed-content">
+        <div>
+          <div class="feed-brand-row">
+            ${feed.rebuy ? '<span class="rebuy-badge">买过</span>' : ''}
+            <span class="feed-brand">${feed.brand}</span>
+          </div>
+          <div class="feed-title">${feed.title}</div>
+          <div class="feed-stats">${feed.stats}</div>
+          <div class="feed-location">${feed.location}</div>
+        </div>
+        <div class="feed-bottom">
+          <div class="price-row">
+            <span class="price-current"><span class="price-currency">¥</span>${feed.price}</span>
+            <span class="price-old">¥${feed.oldPrice}</span>
+          </div>
+          ${feed.discountTag ? `<div class="discount-tag">${feed.discountTag}</div>` : ''}
+          ${feed.specialTag ? `<div class="special-tag">${feed.specialTag}</div>` : ''}
+          <button class="grab-btn">抢</button>
+        </div>
+      </div>
+    </div>
+  `).join('') + `
+    <div class="footer-tip">
+      没找到想要的？试试「<span class="pink">问小团</span>」或者 <button class="pink" onclick="toggleFilterPanel()">修改条件 ></button>
+    </div>`;
+}
+
+// ===== RENDER SUGGESTION BANNER =====
+function renderSuggestion() {
+  const banner = document.getElementById('suggestionBanner');
+  if (!pendingSuggestion || isFilterOpen) {
+    banner.style.display = 'none';
+    return;
+  }
+  banner.style.display = 'block';
+  banner.innerHTML = `
+    <div class="sug-inner" onclick="applySuggestion()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      <span style="font-size:14px;font-weight:700;color:#111827;">试试：</span>
+      <span style="color:#db2777;font-weight:500;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${pendingSuggestion.name}</span>
+      <button class="sug-close" onclick="event.stopPropagation();dismissSuggestion()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>`;
+}
+
+// ===== ACTIONS =====
+function toggleFilterPanel() {
+  isFilterOpen = !isFilterOpen;
+  renderFilterPanel();
+  renderSuggestion();
+}
+
+function closeFilterPanel() {
+  isFilterOpen = false;
+  renderFilterPanel();
+  renderSuggestion();
+}
+
+function toggleDistance() {
+  const chip = document.getElementById('chipDistance');
+  const dist = selectedFilters.distance || [];
+  if (dist.includes('附近500m')) {
+    selectedFilters.distance = [];
+    chip.classList.remove('active');
+  } else {
+    selectedFilters.distance = ['附近500m'];
+    chip.classList.add('active');
+    isApplied = true;
+  }
+  renderFeed();
+}
+
+function toggleOption(groupId, opt) {
+  const group = FILTER_CONFIG.find(g => g.id === groupId);
+  if (!group) return;
+  const current = selectedFilters[groupId] || [];
+  if (group.type === 'single') {
+    selectedFilters[groupId] = current.includes(opt) ? [] : [opt];
+  } else {
+    selectedFilters[groupId] = current.includes(opt) ? current.filter(o => o !== opt) : [...current, opt];
+  }
+  renderFilterPanel();
+}
+
+function handleReset() {
+  selectedFilters = { distance:[], price:[], tags:[], time:[], people:[], scene:[], category:[] };
+  renderFilterPanel();
+}
+
+function handleConfirm() {
+  isFilterOpen = false;
+  isApplied = getFilterCount() > 0;
+  renderFilterPanel();
+  renderFeed();
+  renderSuggestion();
+}
+
+function applySuggestion() {
+  if (!pendingSuggestion) return;
+  selectedFilters = { distance:[], price:[], tags:[], time:[], people:[], scene:[], category:[], ...pendingSuggestion.filters };
+  isApplied = true;
+  pendingSuggestion = null;
+  renderSuggestion();
+  renderFeed();
+  renderFilterPanel();
+}
+
+function dismissSuggestion() {
+  pendingSuggestion = null;
+  renderSuggestion();
+}
+
+function triggerSuggestion(idx) {
+  pendingSuggestion = SUGGESTIONS[idx];
+  isFilterOpen = false;
+  renderFilterPanel();
+  renderSuggestion();
+}
+
+function clearAllFilters() {
+  selectedFilters = { distance:[], price:[], tags:[], time:[], people:[], scene:[], category:[] };
+  isApplied = false;
+  customFilterA = null;
+  pendingSuggestion = null;
+  document.getElementById('chipDistance').classList.remove('active');
+  renderFilterPanel();
+  renderFeed();
+  renderSuggestion();
+}
+
+// ===== SCROLL SHADOW =====
+document.getElementById('app').addEventListener('scroll', function() {
+  const bar = document.getElementById('stickyBar');
+  bar.style.boxShadow = this.scrollTop > 60 ? '0 4px 10px rgba(0,0,0,0.05)' : 'none';
+});
+
+// ===== INIT =====
+renderFeed();
+renderFilterPanel();
+renderSuggestion();
+
+// ============================================================
+// ===== VERSION B: 简化版筛选逻辑 =====
+// 筛选维度：
+//   1. 价格与标签：超低价 / 低价 / 加倍补 / 新品上新 / 评价高
+//   2. 场景与人数：工作餐 / 单人餐 / 双人餐 / 多人餐
+// ============================================================
+
+const FILTER_CONFIG_B = [
+  {
+    id: "priceTag",
+    title: "价格与标签",
+    type: "multi",
+    options: ["超低价", "低价", "加倍补", "新品上新", "评价高"]
+  },
+  {
+    id: "sceneAndPeople",
+    title: "场景与人数",
+    type: "multi",
+    options: ["工作餐", "单人餐", "双人餐", "多人餐"]
+  }
+];
+
+// 简化版 tag 映射
+const TAG_MAP_B = {
+  "超低价":    ["10元以下"],
+  "低价":      ["10-20元", "20-30元"],
+  "加倍补":    ["加倍补", "现在可用", "节假日可用"],
+  "新品上新":  ["新品尝鲜", "新品上新", "7日新品"],
+  "评价高":    ["评价高分", "评价高"],
+  "工作餐":    ["工作餐", "午餐"],
+  "单人餐":    ["单人餐"],
+  "双人餐":    ["双人餐"],
+  "多人餐":    ["多人餐"]
+};
+
+let selectedFiltersB = { distance: [], priceTag: [], sceneAndPeople: [] };
+let isAppliedB = false;
+let isFilterOpenB = false;
+let customFilterB = null; // 'lowPriceAfternoonTea' | null
+let pendingSuggestionB = null;
+
+function getFilterCountB() {
+  return FILTER_CONFIG_B.reduce((acc, g) => acc + (selectedFiltersB[g.id]?.length || 0), 0);
+}
+
+function matchesFeedB(feed) {
+  // 自定义低价下午茶过滤：必须是下午茶品类且符合低价阈値
+  if (customFilterB === 'lowPriceAfternoonTea') {
+    const isAfternoonTea = feed.categories.includes('下午茶');
+    return isAfternoonTea && isLowPrice(feed);
+  }
+
+  const activeGroupIds = Object.keys(selectedFiltersB).filter(k => selectedFiltersB[k]?.length > 0);
+  if (!isAppliedB || activeGroupIds.length === 0) return true;
+  return activeGroupIds.every(groupId => {
+    const opts = selectedFiltersB[groupId];
+    if (!opts || opts.length === 0) return true;
+    return opts.some(opt => {
+      const matchKeys = TAG_MAP_B[opt] || [opt];
+      return matchKeys.some(key => feed.categories.includes(key));
+    });
+  });
+}
+
+function renderFilterPanelB() {
+  const panel = document.getElementById('filterPanelB');
+  const backdrop = document.getElementById('filterBackdropB');
+  const chipFilter = document.getElementById('chipFilterB');
+  const filterArrow = document.getElementById('filterArrowB');
+  const count = getFilterCountB();
+
+  chipFilter.classList.toggle('active-b', isFilterOpenB || count > 0);
+  filterArrow.style.transform = isFilterOpenB ? 'rotate(180deg)' : 'rotate(0deg)';
+
+  let badge = chipFilter.querySelector('.fbadgeB');
+  if (count > 0) {
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.className = 'fbadgeB';
+      badge.style.cssText = 'margin-left:4px;padding:1px 5px;border-radius:9999px;background:#7c3aed;color:#fff;font-size:10px;';
+      chipFilter.insertBefore(badge, filterArrow);
+    }
+    badge.textContent = count;
+    filterArrow.style.display = 'none';
+  } else {
+    if (badge) badge.remove();
+    filterArrow.style.display = '';
+  }
+
+  if (!isFilterOpenB) {
+    panel.classList.remove('open');
+    backdrop.classList.remove('open');
+    return;
+  }
+
+  panel.classList.add('open');
+  backdrop.classList.add('open');
+
+  const scroll = document.getElementById('filterScrollB');
+  scroll.innerHTML = FILTER_CONFIG_B.map(group => `
+    <div class="fgroup">
+      <div class="fgroup-title">${group.title}</div>
+      <div class="foptions">
+        ${group.options.map(opt => {
+          const sel = selectedFiltersB[group.id]?.includes(opt);
+          return '<button class="fopt' + (sel ? ' sel-b' : '') + '" onclick="toggleOptionB(\'' + group.id + '\',\'' + opt + '\')">' + opt + '</button>';
+        }).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderFeedB() {
+  const container = document.getElementById('feedCardsB');
+  const filtered = ALL_FEEDS.filter(matchesFeedB);
+
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="empty-state"><p>没有找到符合条件的商品</p><button onclick="toggleFilterPanelB()" style="background:#f5f3ff;color:#7c3aed;">换个条件试试</button></div>';
+    return;
+  }
+
+  container.innerHTML = filtered.map(feed => {
+    return '<div class="feed-card">'
+      + '<img class="feed-img" src="' + feed.img + '" alt="' + feed.title + '" onerror="this.src=\'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=200&h=200&fit=crop\'" />'
+      + '<div class="feed-content">'
+      + '<div>'
+      + '<div class="feed-brand-row">'
+      + (feed.rebuy ? '<span class="rebuy-badge">买过</span>' : '')
+      + '<span class="feed-brand">' + feed.brand + '</span>'
+      + '</div>'
+      + '<div class="feed-title">' + feed.title + '</div>'
+      + '<div class="feed-stats">' + feed.stats + '</div>'
+      + '<div class="feed-location">' + feed.location + '</div>'
+      + '</div>'
+      + '<div class="feed-bottom">'
+      + '<div class="price-row">'
+      + '<span class="price-current"><span class="price-currency">¥</span>' + feed.price + '</span>'
+      + '<span class="price-old">¥' + feed.oldPrice + '</span>'
+      + '</div>'
+      + (feed.discountTag ? '<div class="discount-tag">' + feed.discountTag + '</div>' : '')
+      + (feed.specialTag ? '<div class="special-tag">' + feed.specialTag + '</div>' : '')
+      + '<button class="grab-btn" style="background:#7c3aed;box-shadow:0 2px 8px rgba(124,58,237,0.3);">抢</button>'
+      + '</div>'
+      + '</div>'
+      + '</div>';
+  }).join('') + '<div class="footer-tip">没找到想要的？<button class="pink" style="color:#7c3aed;" onclick="toggleFilterPanelB()">修改条件 ></button></div>';
+}
+
+// ===== RENDER SUGGESTION BANNER B =====
+function renderSuggestionB() {
+  const banner = document.getElementById('suggestionBannerB');
+  if (!pendingSuggestionB || isFilterOpenB) {
+    banner.style.display = 'none';
+    return;
+  }
+  banner.style.display = 'block';
+  banner.innerHTML = `
+    <div class="sug-inner" style="border-color:#ede9fe;background:#faf5ff;" onclick="applySuggestionB()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      <span style="font-size:14px;font-weight:700;color:#111827;">试试：</span>
+      <span style="color:#7c3aed;font-weight:500;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${pendingSuggestionB.name}</span>
+      <button class="sug-close" onclick="event.stopPropagation();dismissSuggestionB()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>`;
+}
+
+function applySuggestionB() {
+  if (!pendingSuggestionB) return;
+  isFilterOpenB = false;
+  if (pendingSuggestionB.customFilter === 'lowPriceAfternoonTea') {
+    selectedFiltersB = { distance:[], priceTag:[], sceneAndPeople:[] };
+    customFilterB = 'lowPriceAfternoonTea';
+  } else {
+    selectedFiltersB = { distance:[], priceTag: pendingSuggestionB.filters.priceTag || [], sceneAndPeople: pendingSuggestionB.filters.sceneAndPeople || [] };
+    customFilterB = null;
+  }
+  isAppliedB = true;
+  pendingSuggestionB = null;
+  renderSuggestionB();
+  renderFeedB();
+  renderFilterPanelB();
+}
+
+function dismissSuggestionB() {
+  pendingSuggestionB = null;
+  renderSuggestionB();
+}
+
+function triggerSuggestionB(idx) {
+  pendingSuggestionB = SUGGESTIONS_B[idx];
+  isFilterOpenB = false;
+  renderFilterPanelB();
+  renderSuggestionB();
+}
+
+function toggleFilterPanelB() {
+  isFilterOpenB = !isFilterOpenB;
+  renderFilterPanelB();
+  renderSuggestionB();
+}
+
+function closeFilterPanelB() {
+  isFilterOpenB = false;
+  renderFilterPanelB();
+  renderSuggestionB();
+}
+
+function toggleDistanceB() {
+  const chip = document.getElementById('chipDistanceB');
+  const dist = selectedFiltersB.distance || [];
+  if (dist.includes('附近500m')) {
+    selectedFiltersB.distance = [];
+    chip.classList.remove('active-b');
+  } else {
+    selectedFiltersB.distance = ['附近500m'];
+    chip.classList.add('active-b');
+    isAppliedB = true;
+  }
+  renderFeedB();
+}
+
+function toggleOptionB(groupId, opt) {
+  const group = FILTER_CONFIG_B.find(g => g.id === groupId);
+  if (!group) return;
+  const current = selectedFiltersB[groupId] || [];
+  if (group.type === 'single') {
+    selectedFiltersB[groupId] = current.includes(opt) ? [] : [opt];
+  } else {
+    selectedFiltersB[groupId] = current.includes(opt) ? current.filter(o => o !== opt) : [...current, opt];
+  }
+  renderFilterPanelB();
+}
+
+function handleResetB() {
+  selectedFiltersB = { distance: [], priceTag: [], sceneAndPeople: [] };
+  renderFilterPanelB();
+}
+
+function handleConfirmB() {
+  isFilterOpenB = false;
+  isAppliedB = getFilterCountB() > 0;
+  renderFilterPanelB();
+  renderFeedB();
+  renderSuggestionB();
+}
+
+function clearAllFiltersB() {
+  selectedFiltersB = { distance: [], priceTag: [], sceneAndPeople: [] };
+  isAppliedB = false;
+  customFilterB = null;
+  pendingSuggestionB = null;
+  document.getElementById('chipDistanceB').classList.remove('active-b');
+  renderFilterPanelB();
+  renderFeedB();
+  renderSuggestionB();
+}
+
+// scroll shadow for B
+document.getElementById('app2').addEventListener('scroll', function() {
+  const bar = document.getElementById('stickyBarB');
+  bar.style.boxShadow = this.scrollTop > 60 ? '0 4px 10px rgba(0,0,0,0.05)' : 'none';
+});
+
+// ===== INIT B =====
+renderFeedB();
+renderFilterPanelB();
+renderSuggestionB();
+
+// ============================================================
+// ===== VERSION C: 脑洞版 — 场景化快筛 =====
+// 用户界面：quick-filters 行和 A 版完全一样，只是「筛选∨」换成
+//           一个动态场景 chip + 一个刷新按钮
+// 底层：复用 A 侧完全相同的 TAG_MAP + matchesFeed 逻辑，用户不感知
+// ============================================================
+
+// ===== 场景库 =====
+const SCENE_POOL = [
+  { id:'afternoon-tea',  emoji:'☕️', label:'低价下午茶',  customFilter:'lowPrice',
+    filters:{ scene:['下午茶'], category:['奶茶','咖啡','面包甜点'] } },
+  { id:'lunch-solo',     emoji:'🍱', label:'一人午餐',
+    filters:{ scene:['午餐','工作餐'], people:['单人餐'] } },
+  { id:'dinner-date',    emoji:'🕯️', label:'约会晚餐',
+    filters:{ people:['双人餐'], tags:['评价高'], scene:['晚餐'] } },
+  { id:'late-night',     emoji:'🌙', label:'夜宵',
+    filters:{ scene:['夜宵'] } },
+  { id:'breakfast',      emoji:'🌅', label:'早餐',
+    filters:{ scene:['早餐'] } },
+  { id:'group-4',        emoji:'🎉', label:'多人聚餐',
+    filters:{ people:['多人餐'], scene:['晚餐'] } },
+  { id:'couple',         emoji:'👫', label:'双人套餐',
+    filters:{ people:['双人餐'] } },
+  { id:'hotpot',         emoji:'🍲', label:'火锅',
+    filters:{ category:['火锅'] } },
+  { id:'buffet',         emoji:'🍽️', label:'自助餐',
+    filters:{ category:['自助餐'] } },
+  { id:'milk-tea',       emoji:'🧋', label:'奶茶',
+    filters:{ category:['奶茶'] } },
+  { id:'coffee',         emoji:'☕',  label:'咖啡',
+    filters:{ category:['咖啡'] } },
+  { id:'high-rating',    emoji:'⭐', label:'高评价',
+    filters:{ tags:['评价高'] } },
+  { id:'new-item',       emoji:'🆕', label:'新品上新',
+    filters:{ tags:['新品上新'] } },
+  { id:'double-subsidy', emoji:'💰', label:'加倍补',
+    filters:{ tags:['加倍补'] } },
+  { id:'under-20',       emoji:'🪙', label:'20元以内',
+    filters:{ price:['10元以下','10-20元'] } },
+  { id:'work-lunch',     emoji:'💼', label:'工作餐',
+    filters:{ scene:['工作餐','午餐'], people:['单人餐'] } },
+  { id:'weekend-feast',  emoji:'🥳', label:'周末大餐',
+    filters:{ people:['多人餐'], tags:['评价高'], category:['正餐','自助餐','火锅'] } },
+];
+
+// ===== 状态 =====
+let currentSceneIdxC = 0;   // 当前推荐的场景在 SCENE_POOL 中的下标
+let isSceneActiveC = false;  // 当前场景 chip 是否已激活（筛选中）
+let distanceActiveC = false; // 附近500m 是否激活
+
+// ===== 用场景条件过滤单条 feed =====
+function matchesFeedByScene(feed, scene) {
+  if (scene.customFilter === 'lowPrice' && !isLowPrice(feed)) return false;
+  const filters = scene.filters || {};
+  const activeGroupIds = Object.keys(filters).filter(k => filters[k]?.length > 0);
+  if (activeGroupIds.length === 0) return true;
+  return activeGroupIds.every(groupId => {
+    const opts = filters[groupId];
+    if (!opts || opts.length === 0) return true;
+    return opts.some(opt => {
+      const matchKeys = TAG_MAP[opt] || [opt];
+      return matchKeys.some(key => feed.categories.includes(key));
+    });
+  });
+}
+
+// ===== 渲染场景 chip =====
+function renderSceneChipC() {
+  const scene = SCENE_POOL[currentSceneIdxC];
+  const chip = document.getElementById('chipSceneC');
+  const emojiEl = document.getElementById('chipSceneEmojiC');
+  const labelEl = document.getElementById('chipSceneLabelC');
+  const arrowEl = document.getElementById('chipSceneArrowC');
+
+  emojiEl.textContent = scene.emoji + ' ';
+  labelEl.textContent = scene.label;
+
+  if (isSceneActiveC) {
+    chip.classList.add('active-c');
+    arrowEl.style.transform = 'rotate(180deg)';
+  } else {
+    chip.classList.remove('active-c');
+    arrowEl.style.transform = 'rotate(0deg)';
+  }
+  // 同步控制台按钮预览文字
+  const consolePreview = document.getElementById('consoleScenePreviewC');
+  if (consolePreview) consolePreview.textContent = scene.emoji + ' ' + scene.label + '　';
+}
+
+// ===== 点击场景 chip：切换激活/取消 =====
+function toggleSceneActiveC() {
+  isSceneActiveC = !isSceneActiveC;
+  renderSceneChipC();
+  renderFeedC();
+}
+
+// ===== 刷新：换下一个场景推荐（取消当前激活，换新场景） =====
+function refreshSceneC() {
+  isSceneActiveC = false;
+  currentSceneIdxC = (currentSceneIdxC + 1) % SCENE_POOL.length;
+  renderSceneChipC();
+  renderFeedC();
+  // 旋转动画
+  const icon = document.getElementById('refreshIconC');
+  icon.style.transform = 'rotate(360deg)';
+  setTimeout(() => { icon.style.transform = 'rotate(0deg)'; icon.style.transition = 'none'; }, 420);
+  setTimeout(() => { icon.style.transition = 'transform 0.4s'; }, 440);
+}
+
+// ===== 附近500m 切换 =====
+function toggleDistanceC() {
+  const chip = document.getElementById('chipDistanceC');
+  distanceActiveC = !distanceActiveC;
+  chip.classList.toggle('active', distanceActiveC);
+  renderFeedC();
+}
+
+// ===== 过滤逻辑 =====
+function matchesFeedC(feed) {
+  // 附近500m 过滤（简单用距离字段模拟：<1km 视为附近）
+  if (distanceActiveC) {
+    const loc = feed.location || '';
+    const m = loc.match(/^(\d+(?:\.\d+)?)(m|km)/);
+    if (m) {
+      const dist = m[2] === 'km' ? parseFloat(m[1]) * 1000 : parseFloat(m[1]);
+      if (dist > 500) return false;
+    }
+  }
+  // 场景过滤
+  if (!isSceneActiveC) return true; // 未激活时展示全部
+  return matchesFeedByScene(feed, SCENE_POOL[currentSceneIdxC]);
+}
+
+// ===== 渲染 feed =====
+function renderFeedC() {
+  const container = document.getElementById('feedCardsC');
+  const filtered = ALL_FEEDS.filter(matchesFeedC);
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<div class="empty-state">
+      <p>没有找到符合条件的商品</p>
+      <button onclick="refreshSceneC()" style="background:#f0fdf4;color:#059669;">换个场景试试</button>
+    </div>`;
+    return;
+  }
+  container.innerHTML = filtered.map(feed => `
+    <div class="feed-card">
+      <img class="feed-img" src="${feed.img}" alt="${feed.title}" onerror="this.src='https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=200&h=200&fit=crop'" />
+      <div class="feed-content">
+        <div>
+          <div class="feed-brand-row">
+            ${feed.rebuy ? '<span class="rebuy-badge" style="color:#059669;background:#f0fdf4;border-color:#a7f3d0;">买过</span>' : ''}
+            <span class="feed-brand">${feed.brand}</span>
+          </div>
+          <div class="feed-title">${feed.title}</div>
+          <div class="feed-stats">${feed.stats}</div>
+          <div class="feed-location">${feed.location}</div>
+        </div>
+        <div class="feed-bottom">
+          <div class="price-row">
+            <span class="price-current" style="color:#059669;"><span class="price-currency">¥</span>${feed.price}</span>
+            <span class="price-old">¥${feed.oldPrice}</span>
+          </div>
+          ${feed.discountTag ? `<div class="discount-tag" style="color:#34d399;">${feed.discountTag}</div>` : ''}
+          ${feed.specialTag ? `<div class="special-tag" style="background:#10b981;">${feed.specialTag}</div>` : ''}
+          <button class="grab-btn" style="background:#10b981;box-shadow:0 2px 8px rgba(16,185,129,0.3);">抢</button>
+        </div>
+      </div>
+    </div>
+  `).join('') + `<div class="footer-tip">没找到想要的？<button style="color:#10b981;background:none;border:none;font-size:14px;font-weight:500;cursor:pointer;" onclick="refreshSceneC()">换个场景 ></button></div>`;
+}
+
+// ===== 清除所有筛选 =====
+function clearAllFiltersC() {
+  isSceneActiveC = false;
+  distanceActiveC = false;
+  document.getElementById('chipDistanceC').classList.remove('active');
+  renderSceneChipC();
+  renderFeedC();
+}
+
+// ===== 控制台触发：切换到指定场景并激活 =====
+function triggerSceneC(sceneId) {
+  const idx = SCENE_POOL.findIndex(s => s.id === sceneId);
+  if (idx === -1) return;
+  currentSceneIdxC = idx;
+  isSceneActiveC = true;
+  renderSceneChipC();
+  renderFeedC();
+  document.getElementById('app3').scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// scroll shadow for C
+document.getElementById('app3').addEventListener('scroll', function() {
+  const bar = document.getElementById('stickyBarC');
+  bar.style.boxShadow = this.scrollTop > 60 ? '0 4px 10px rgba(0,0,0,0.05)' : 'none';
+});
+
+// ===== INIT C =====
+renderSceneChipC();
+renderFeedC();
+</script>
+</body>
+</html>
